@@ -17,6 +17,7 @@ import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@SuppressWarnings("ALL")
 public abstract class Utils {
 
     private static final UserLogin plugin = UserLogin.getPlugin();

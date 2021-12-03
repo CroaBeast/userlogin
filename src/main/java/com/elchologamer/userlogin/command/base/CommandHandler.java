@@ -4,6 +4,7 @@ import com.elchologamer.userlogin.UserLogin;
 import org.bukkit.command.CommandSender;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class CommandHandler extends BaseCommand {
@@ -39,14 +40,12 @@ public class CommandHandler extends BaseCommand {
     public List<String> tabComplete(CommandSender sender, String label, String[] args) {
         List<String> options = new ArrayList<>();
 
-        if (args.length == 1) {
-            for (SubCommand subCommand : subCommands) {
-                options.add(subCommand.getName());
-            }
-        } else {
+        if (args.length == 1)
+            for (SubCommand subCommand : subCommands) options.add(subCommand.getName());
+
+        else {
             for (SubCommand subCommand : subCommands) {
                 if (!subCommand.getName().equals(args[0])) continue;
-
                 options = subCommand.tabComplete(sender, label, getSubArgs(args));
                 break;
             }
@@ -54,7 +53,6 @@ public class CommandHandler extends BaseCommand {
 
         // Filter out list
         options.removeIf(s -> !s.startsWith(args[args.length - 1]));
-
         return options;
     }
 
@@ -64,7 +62,7 @@ public class CommandHandler extends BaseCommand {
         return subArgs;
     }
 
-    public void add(SubCommand subCommand) {
-        subCommands.add(subCommand);
+    public void add(SubCommand... subCommands) {
+        this.subCommands.addAll(Arrays.asList(subCommands));
     }
 }

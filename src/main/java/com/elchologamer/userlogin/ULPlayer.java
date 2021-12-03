@@ -42,7 +42,6 @@ public class ULPlayer {
     public static ULPlayer get(UUID uuid) {
         ULPlayer player = players.get(uuid);
         if (player == null) player = new ULPlayer(uuid);
-
         return player;
     }
 
@@ -53,9 +52,8 @@ public class ULPlayer {
         Player player = getPlayer();
 
         // Teleport to login position
-        if (plugin.getConfig().getBoolean("teleports.toLogin")) {
+        if (plugin.getConfig().getBoolean("teleports.toLogin"))
             player.teleport(plugin.getLocations().getLocation("login", player.getWorld().getSpawnLocation()));
-        }
 
         if (fromOtherServer) {
             onAuthenticate(AuthType.LOGIN);
@@ -63,13 +61,11 @@ public class ULPlayer {
         }
 
         // Bypass if IP is registered
+        InetSocketAddress address = player.getAddress();
         if (plugin.getConfig().getBoolean("ipRecords.enabled")) {
-            if (ip != null) {
-                InetSocketAddress addr = player.getAddress();
-                if (addr != null && addr.getHostString().equals(ip)) {
-                    onAuthenticate(AuthType.LOGIN);
-                    return;
-                }
+            if (ip != null && address != null && address.getHostString().equals(ip)) {
+                onAuthenticate(AuthType.LOGIN);
+                return;
             }
 
             if (ipForgor != -1) {
@@ -83,14 +79,12 @@ public class ULPlayer {
     }
 
     public void onQuit() {
-        if (!loggedIn) {
-            cancelPreLoginTasks();
-        } else {
+        if (!loggedIn) cancelPreLoginTasks();
+        else {
             loggedIn = false;
 
-            if (plugin.getConfig().getBoolean("teleports.savePosition")) {
+            if (plugin.getConfig().getBoolean("teleports.savePosition"))
                 plugin.getLocations().savePlayerLocation(getPlayer());
-            }
 
             // Store IP address if enabled
             if (plugin.getConfig().getBoolean("ipRecords.enabled")) {
@@ -118,42 +112,33 @@ public class ULPlayer {
         if (bungeeEnabled) {
             String targetServer = config.getString("bungeeCord.spawnServer");
             event = new AuthenticationEvent(player, type, targetServer);
-        } else {
+        }
+        else {
             Location target = null;
             Location spawn = player.getWorld().getSpawnLocation();
 
-            if (teleports.getBoolean("savePosition")) {
+            if (teleports.getBoolean("savePosition"))
                 target = plugin.getLocations().getPlayerLocation(player, spawn);
-            } else if (teleports.getBoolean("toSpawn", true)) {
+            else if (teleports.getBoolean("toSpawn", true))
                 target = plugin.getLocations().getLocation("spawn", spawn);
-            }
 
             event = new AuthenticationEvent(player, type, target);
         }
 
         plugin.getServer().getPluginManager().callEvent(event);
-
         if (event.isCancelled()) return;
-
         cancelPreLoginTasks();
 
         // Save IP address
-        if (config.getBoolean("ipRecords.enabled")) {
-            InetSocketAddress addr = player.getAddress();
-            if (addr != null) ip = addr.getHostString();
-        }
+        InetSocketAddress address = player.getAddress();
+        if (config.getBoolean("ipRecords.enabled") && address != null) ip = address.getHostString();
 
         // Send login message
         if (event.getMessage() != null) player.sendMessage(event.getMessage());
 
         // Join announcement
-        if (event.getAnnouncement() != null) {
-            for (Player onlinePlayer : player.getServer().getOnlinePlayers()) {
-                if (UserLoginAPI.isLoggedIn(player)) {
-                    onlinePlayer.sendMessage(event.getAnnouncement());
-                }
-            }
-        }
+        if (event.getAnnouncement() != null) for (Player onlinePlayer : player.getServer().getOnlinePlayers())
+            if (UserLoginAPI.isLoggedIn(player)) onlinePlayer.sendMessage(event.getAnnouncement());
 
         loggedIn = true;
 
@@ -167,11 +152,9 @@ public class ULPlayer {
         }
 
         // Teleport to destination
-        if (bungeeEnabled && event.getTargetServer() != null) {
+        if (bungeeEnabled && event.getTargetServer() != null)
             Utils.sendPluginMessage(player, "BungeeCord", "Connect", event.getTargetServer());
-        } else if (event.getDestination() != null) {
-            player.teleport(event.getDestination());
-        }
+        else if (event.getDestination() != null) player.teleport(event.getDestination());
     }
 
     public boolean onLoginAttempt() {
@@ -182,9 +165,8 @@ public class ULPlayer {
                     plugin.getLang().getMessage("messages.max_attempts_exceeded").replace("{count}", Integer.toString(maxAttempts))
             );
             return false;
-        } else {
-            return true;
         }
+        else return true;
     }
 
     private void sendWelcomeMessage() {
@@ -204,7 +186,6 @@ public class ULPlayer {
                     timeoutDelay * 20
             );
         }
-
 
         // Repeating welcome message
         long interval = plugin.getConfig().getLong("repeatingWelcomeMsg", -1) * 20;
@@ -229,19 +210,14 @@ public class ULPlayer {
         }
     }
 
-    public void sendMessage(String path) {
-        sendMessage(path, null);
-    }
+    public void sendMessage(String path) { sendMessage(path, null); }
 
     public void sendMessage(String path, Map<String, Object> replace) {
         String message = plugin.getLang().getMessage(path);
         if (message == null || message.isEmpty()) return;
 
-        if (replace != null) {
-            for (String k : replace.keySet()) {
-                message = message.replace("{" + k + "}", replace.get(k).toString());
-            }
-        }
+        if (replace != null) for (String k : replace.keySet())
+            message = message.replace("{" + k + "}", replace.get(k).toString());
 
         getPlayer().sendMessage(Utils.color(message));
     }
@@ -250,11 +226,8 @@ public class ULPlayer {
         Player player = plugin.getServer().getPlayer(uuid);
         if (player == null)
             throw new IllegalArgumentException("Player with UUID " + uuid + " not found");
-
         return player;
     }
 
-    public boolean isLoggedIn() {
-        return loggedIn;
-    }
+    public boolean isLoggedIn() { return loggedIn; }
 }

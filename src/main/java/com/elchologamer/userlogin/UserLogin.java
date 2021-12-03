@@ -10,6 +10,7 @@ import com.elchologamer.userlogin.command.sub.SetCommand;
 import com.elchologamer.userlogin.command.sub.UnregisterCommand;
 import com.elchologamer.userlogin.database.Database;
 import com.elchologamer.userlogin.listener.JoinQuitListener;
+import com.elchologamer.userlogin.listener.PlayerPackListener;
 import com.elchologamer.userlogin.listener.PluginMsgListener;
 import com.elchologamer.userlogin.listener.restriction.*;
 import com.elchologamer.userlogin.manager.LangManager;
@@ -19,6 +20,7 @@ import com.elchologamer.userlogin.util.LogFilter;
 import com.elchologamer.userlogin.util.Metrics;
 import com.elchologamer.userlogin.util.Metrics.SimplePie;
 import com.elchologamer.userlogin.util.Utils;
+import org.bukkit.Bukkit;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -27,7 +29,6 @@ public final class UserLogin extends JavaPlugin {
     private static UserLogin plugin;
 
     public final static int PLUGIN_ID = 80669;
-    public final static int BSTATS_ID = 8586;
 
     private LangManager lang;
     private LocationsManager locationsManager;
@@ -63,31 +64,34 @@ public final class UserLogin extends JavaPlugin {
             getServer().getMessenger().registerIncomingPluginChannel(this, "userlogin:returned", listener);
             registerEvents(listener);
             Utils.log("Autologin enabled");
-        } else {
-            registerEvents(new JoinQuitListener());
         }
+        else registerEvents(new JoinQuitListener());
 
-        registerEvents(new ChatRestriction());
-        registerEvents(new MovementRestriction());
-        registerEvents(new BlockBreakingRestriction());
-        registerEvents(new BlockPlacingRestriction());
-        registerEvents(new CommandRestriction());
-        registerEvents(new ItemDropRestriction());
-        registerEvents(new AttackRestriction());
-        registerEvents(new ReceiveDamageRestriction());
+        registerEvents(
+                new ChatRestriction(),
+                new MovementRestriction(),
+                new BlockBreakingRestriction(),
+                new BlockPlacingRestriction(),
+                new CommandRestriction(),
+                new ItemDropRestriction(),
+                new AttackRestriction(),
+                new ReceiveDamageRestriction()
+        );
+
+        if (hasPack()) registerEvents(new PlayerPackListener());
 
         // Register Item Pickup restriction if class exists
         try {
             Class.forName("org.bukkit.event.entity.EntityPickupItemEvent");
             getServer().getPluginManager().registerEvents(new ItemPickupRestriction(), this);
-        } catch (ClassNotFoundException ignored) {
         }
+        catch (ClassNotFoundException ignored) {}
 
         CommandHandler mainCommand = new CommandHandler("userlogin");
-        mainCommand.add(new HelpCommand());
-        mainCommand.add(new SetCommand());
-        mainCommand.add(new ReloadCommand());
-        mainCommand.add(new UnregisterCommand());
+        mainCommand.add(
+                new HelpCommand(), new SetCommand(),
+                new ReloadCommand(), new UnregisterCommand()
+        );
 
         // Register commands
         mainCommand.register();
@@ -97,16 +101,15 @@ public final class UserLogin extends JavaPlugin {
 
         // bStats setup
         if (!getConfig().getBoolean("debug")) {
-            Metrics metrics = new Metrics(this, BSTATS_ID);
+            Metrics metrics = new Metrics(this, 8586);
 
             metrics.addCustomChart(new SimplePie("storage_type", () -> getConfig().getString("database.type", "yaml").toLowerCase()));
             metrics.addCustomChart(new SimplePie("lang", () -> getConfig().getString("lang", "en_US")));
         }
 
         // Check for updates
-        if (getConfig().getBoolean("checkUpdates", true)) {
+        if (getConfig().getBoolean("checkUpdates", true))
             getServer().getScheduler().runTaskAsynchronously(this, this::checkUpdates);
-        }
 
         Utils.log(getName() + " v" + getDescription().getVersion() + " enabled");
     }
@@ -123,30 +126,27 @@ public final class UserLogin extends JavaPlugin {
         getServer().getScheduler().cancelTasks(this);
 
         // Start database
-        if (db != null) {
-            try {
-                db.disconnect();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
+        disconnectDatabase();
 
         db = Database.select();
         getServer().getScheduler().runTaskAsynchronously(this, this::connectDatabase);
     }
 
+    private void disconnectDatabase() {
+        if (db == null) return;
+
+        try { db.disconnect(); }
+        catch (Exception e) { e.printStackTrace(); }
+    }
+
     private void connectDatabase() {
         try {
             db.connect();
-
-            if (db.shouldLogConnected()) {
-                Utils.log(lang.getMessage("other.database_connected"));
-            }
+            if (db.shouldLogConnected()) Utils.log(lang.getMessage("other.database_connected"));
         } catch (Exception e) {
             String log = e instanceof ClassNotFoundException ?
                     lang.getMessage("other.driver_missing").replace("{driver}", e.getMessage()) :
                     lang.getMessage("other.database_error");
-
             if (log != null) Utils.log(log);
             e.printStackTrace();
         }
@@ -156,29 +156,22 @@ public final class UserLogin extends JavaPlugin {
         String latest = Utils.fetch("https://api.spigotmc.org/legacy/update.php?resource=" + PLUGIN_ID);
         String current = getDescription().getVersion();
 
-        if (latest == null) {
-            Utils.log("&cUnable to fetch latest version");
-        } else if (!latest.equalsIgnoreCase(current)) {
+        if (latest == null) Utils.log("&cUnable to fetch latest version");
+        else if (!latest.equalsIgnoreCase(current))
             Utils.log("&eA new UserLogin version is available! (v" + latest + ")");
-        } else {
-            Utils.log("&aRunning latest version! (v" + current + ")");
-        }
+        else Utils.log("&aRunning latest version! (v" + current + ")");
     }
 
-    private void registerEvents(Listener listener) {
-        getServer().getPluginManager().registerEvents(listener, this);
+    private void registerEvents(Listener... listeners) {
+        for (Listener listener : listeners) getServer().getPluginManager().registerEvents(listener, this);
+    }
+
+    public boolean hasPack() {
+        return Bukkit.getPluginManager().isPluginEnabled("PressurePack");
     }
 
     @Override
-    public void onDisable() {
-        if (db != null) {
-            try {
-                db.disconnect();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-    }
+    public void onDisable() { disconnectDatabase(); }
 
     public static UserLogin getPlugin() {
         return plugin;
