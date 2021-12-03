@@ -1,28 +1,17 @@
 package com.elchologamer.userlogin;
 
-import com.elchologamer.userlogin.command.ChangePasswordCommand;
-import com.elchologamer.userlogin.command.LoginCommand;
-import com.elchologamer.userlogin.command.RegisterCommand;
-import com.elchologamer.userlogin.command.base.CommandHandler;
-import com.elchologamer.userlogin.command.sub.HelpCommand;
-import com.elchologamer.userlogin.command.sub.ReloadCommand;
-import com.elchologamer.userlogin.command.sub.SetCommand;
-import com.elchologamer.userlogin.command.sub.UnregisterCommand;
-import com.elchologamer.userlogin.database.Database;
-import com.elchologamer.userlogin.listener.JoinQuitListener;
-import com.elchologamer.userlogin.listener.PlayerPackListener;
-import com.elchologamer.userlogin.listener.PluginMsgListener;
+import com.elchologamer.userlogin.command.*;
+import com.elchologamer.userlogin.command.base.*;
+import com.elchologamer.userlogin.command.sub.*;
+import com.elchologamer.userlogin.database.*;
+import com.elchologamer.userlogin.listener.*;
 import com.elchologamer.userlogin.listener.restriction.*;
-import com.elchologamer.userlogin.manager.LangManager;
-import com.elchologamer.userlogin.manager.LocationsManager;
-import com.elchologamer.userlogin.util.FastLoginHook;
-import com.elchologamer.userlogin.util.LogFilter;
-import com.elchologamer.userlogin.util.Metrics;
-import com.elchologamer.userlogin.util.Metrics.SimplePie;
-import com.elchologamer.userlogin.util.Utils;
-import org.bukkit.Bukkit;
-import org.bukkit.event.Listener;
-import org.bukkit.plugin.java.JavaPlugin;
+import com.elchologamer.userlogin.manager.*;
+import com.elchologamer.userlogin.util.*;
+import com.elchologamer.userlogin.util.Metrics.*;
+import org.bukkit.*;
+import org.bukkit.event.*;
+import org.bukkit.plugin.java.*;
 
 public final class UserLogin extends JavaPlugin {
 
@@ -77,8 +66,6 @@ public final class UserLogin extends JavaPlugin {
                 new AttackRestriction(),
                 new ReceiveDamageRestriction()
         );
-
-        if (hasPack()) registerEvents(new PlayerPackListener());
 
         // Register Item Pickup restriction if class exists
         try {

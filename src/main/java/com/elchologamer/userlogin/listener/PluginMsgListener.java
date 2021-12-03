@@ -12,6 +12,7 @@ import org.bukkit.plugin.messaging.PluginMessageListener;
 
 import java.util.UUID;
 
+@SuppressWarnings("ALL")
 public class PluginMsgListener extends JoinQuitListener implements PluginMessageListener, Listener {
 
     @Override
@@ -27,8 +28,7 @@ public class PluginMsgListener extends JoinQuitListener implements PluginMessage
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
-        if (UserLogin.getPlugin().getConfig().getBoolean("disableVanillaJoinMessages")) {
+        if (UserLogin.getPlugin().getConfig().getBoolean("disableVanillaJoinMessages"))
             event.setJoinMessage(null);
-        }
     }
 }

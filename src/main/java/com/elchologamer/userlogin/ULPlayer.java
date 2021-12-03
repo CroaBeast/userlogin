@@ -169,7 +169,7 @@ public class ULPlayer {
         else return true;
     }
 
-    private void sendWelcomeMessage() {
+    public void sendWelcomeMessage() {
         String path = "messages.welcome." + ((UserLoginAPI.isRegistered(getPlayer())) ? "registered" : "unregistered");
         sendMessage(path, new QuickMap<>("player", getPlayer().getName()));
     }
